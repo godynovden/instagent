@@ -41,7 +41,7 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 
 TG_API = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 PUBLIC_BASE_URL = "http://146.103.111.13/ecodisplays/reels"
-MAKE_WEBHOOK_URL = "https://hook.eu1.make.com/h1pbu5veowi7s6ap1s8ramf6rqu4t8mx"
+MAKE_WEBHOOK_URL = os.getenv("MAKE_WEBHOOK_URL")
 
 USED_TOPICS_FILE = OUTPUT_DIR / "trending_used_topics.json"
 

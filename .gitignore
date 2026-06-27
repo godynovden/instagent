@@ -1,0 +1,60 @@
+# ─── Секреты ─── (НИКОГДА не коммитить)
+.env
+*.env
+!.env.example
+
+# ─── Runtime-состояние и данные агента ───
+output/
+content/
+*.log
+context_db.json
+*_state.json
+sent_to_telegram.json
+quality_feedback.json
+prompt_overrides.json
+
+# ─── Node ───
+node_modules/
+package.json
+package-lock.json
+
+# ─── Не относится к контент-агенту ───
+flasher/
+flasher-qt/
+build_combined_model.py
+build_doc.py
+build_report.py
+gen_pdf.js
+generate_felo_ppt.py
+prezentation/
+.claude/
+
+# ─── Бинарные / бизнес-материалы ───
+*.pdf
+*.docx
+*.pptx
+*.xlsx
+*.xls
+*.zip
+*.html
+*.heic
+*.HEIC
+*.mp4
+*.MP4
+*.mov
+*.MOV
+*.mp3
+*.jpg
+*.JPG
+*.jpeg
+*.png
+*.gif
+*.svg
+
+# ─── Python ───
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.DS_Store

@@ -34,6 +34,7 @@ log = logging.getLogger(__name__)
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+ALLOWED_CHAT_ID = TELEGRAM_CHAT_ID  # единственный авторизованный chat_id
 OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "/root/Ecodisplays/output"))
 TG_API = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 SENT_LOG = OUTPUT_DIR / "sent_to_telegram.json"
@@ -339,7 +340,9 @@ def send_for_approval(package_dir: Path) -> bool:
         return False
 
 
-MAKE_WEBHOOK_URL = "https://hook.eu1.make.com/h1pbu5veowi7s6ap1s8ramf6rqu4t8mx"
+MAKE_WEBHOOK_URL = os.getenv("MAKE_WEBHOOK_URL")
+if not MAKE_WEBHOOK_URL:
+    raise RuntimeError("MAKE_WEBHOOK_URL не задан в .env — публикация в Instagram невозможна")
 TELEGRAM_BOT_TOKEN_FOR_URL = os.getenv("TELEGRAM_BOT_TOKEN")
 
 
@@ -494,6 +497,10 @@ def handle_callback(callback: dict):
     data = callback.get("data", "")
     chat_id = callback["message"]["chat"]["id"]
     msg_id = callback["message"]["message_id"]
+
+    if str(chat_id) != str(ALLOWED_CHAT_ID):
+        requests.post(f"{TG_API}/answerCallbackQuery", json={"callback_query_id": query_id}, timeout=5)
+        return
 
     if data == "noop":
         requests.post(f"{TG_API}/answerCallbackQuery", json={"callback_query_id": query_id}, timeout=5)
@@ -714,6 +721,13 @@ def handle_callback(callback: dict):
     data_parts = data.split(":")
     action = data_parts[0]
     pkg_name = data_parts[1] if len(data_parts) > 1 else ""
+
+    # Защита от path traversal: разрешаем только имена из известных пакетов
+    _allowed_pkgs = set(load_sent().keys()) | {p.name for p in OUTPUT_DIR.iterdir() if p.is_dir()}
+    if pkg_name and (pkg_name not in _allowed_pkgs or "/" in pkg_name or ".." in pkg_name or ":" in pkg_name):
+        requests.post(f"{TG_API}/answerCallbackQuery", json={"callback_query_id": query_id}, timeout=5)
+        return
+
     pkg_path = OUTPUT_DIR / pkg_name
 
     # Подтверждаем получение callback
@@ -994,6 +1008,9 @@ def handle_message(message: dict):
     """Обрабатывает входящие фото и видео."""
     chat_id = message["chat"]["id"]
 
+    if str(chat_id) != str(ALLOWED_CHAT_ID):
+        return
+
     # Определяем file_id и тип медиа
     file_id = None
     is_video = False
@@ -1171,13 +1188,9 @@ def handle_message(message: dict):
             }, timeout=5)
         return
 
-    # Игнорируем всё остальное (текст, стикеры и т.д.)
-    if not file_id:
-        return
-
     text = message.get("text", "").strip()
 
-    # Ручное редактирование подписи перед публикацией
+    # Ручное редактирование подписи перед публикацией (обрабатываем ДО проверки file_id)
     if text and not text.startswith("/"):
         pf = load_pending_feedback()
         if pf.get(str(chat_id), {}).get("edit_caption"):
@@ -1259,7 +1272,9 @@ def handle_message(message: dict):
                 _th.Thread(target=_improve_then_regen, daemon=True).start()
             return
 
-    # Игнорируем текстовые сообщения и команды
+    # Игнорируем всё остальное без медиафайла (текст уже обработан выше)
+    if not file_id:
+        return
 
 
 def run_polling():

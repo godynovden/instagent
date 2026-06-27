@@ -47,7 +47,7 @@ BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHAT_ID = int(os.getenv("TELEGRAM_CHAT_ID"))
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
 OPENROUTER_KEY = os.getenv("OPENROUTER_API_KEY")
-MAKE_WEBHOOK = os.getenv("MAKE_WEBHOOK_URL", "https://hook.eu1.make.com/h1pbu5veowi7s6ap1s8ramf6rqu4t8mx")
+MAKE_WEBHOOK = os.getenv("MAKE_WEBHOOK_URL")
 
 TG = f"https://api.telegram.org/bot{BOT_TOKEN}"
 STATE_FILE = Path("/root/Ecodisplays/output/media_bot_state.json")
